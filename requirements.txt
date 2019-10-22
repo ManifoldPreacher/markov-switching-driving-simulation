@@ -1,0 +1,10 @@
+#Use the following command:
+#pip install -r requirements.txt --no-index 
+networkx
+numpy
+collections
+math
+random
+sys
+time
+progress
