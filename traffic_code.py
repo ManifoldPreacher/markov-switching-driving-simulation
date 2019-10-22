@@ -2,76 +2,72 @@ import math, random, networkx, collections, sys, time
 import numpy as np
 from progress.spinner import Spinner
 
-G = networkx.read_graphml("/home/manifoldpreacher/pCloudDrive/Schoolwork/SPECTO1/markov_switching_traffic_code/mm_road_graph.graphml")
+#loads the graphml file of Metro Manila's roads
+G = networkx.read_graphml("./mm_road_graph.graphml")
 
+#reads all graph nodes (road intersections) from the graphml file
 intersections = list(G.nodes())
 
-# In[ ]:
-
-
+#initializes the Markov chain states
 states = ["prospect", "rational"]
 
+#for Transition Probabilities Matrix
 transitionNames = [["pp", "pr",], ["rp", "rr"]]
-
 transitionProbabilities = [[0.5, 0.5], [0.5, 0.5]]
 
+#checks if Transition Probabilities sum to 1
 if sum(transitionProbabilities[0])+sum(transitionProbabilities[1]) != 2:
 	print("Something went wrong, Master! Transition matrix, perhaps?")
 	sys.exit()
 else: print("Transition matrices are alright, Master!")
 
-
-# In[ ]:
-
-
+#handles the markov chain
 class markov:
 	def __init__(self, *args):
-		self.info_state = random.choice(["prospect", "rational"])
-		self.periods = 0
-		self.info_state_list = []
+		self.info_state = random.choice(["prospect", "rational"]) #initial Markov Chain state. Changed by activity_forecast()
+		#self.periods = 0
+		#self.info_state_list = []
 	def activity_forecast(self):
 		prob = 1
-		if self.info_state == "prospect":
+		if self.info_state == "prospect": #transition probabilites for "prospect" current state
 			change = np.random.choice(transitionNames[0],replace=True,p=transitionProbabilities[0])
 			if change == "pp":
 				prob = prob * 0.5
 				self.info_state = "prospect"
-				self.info_state_list.append(self.info_state)
+				#self.info_state_list.append(self.info_state)
 			elif change == "pr":
 				prob = prob * 0.5
 				self.info_state = "rational"
-				self.info_state_list.append(self.info_state)
-		elif self.info_state == "rational":
+				#self.info_state_list.append(self.info_state)
+		elif self.info_state == "rational": #transition probabilites for "rational" current state
 			change = np.random.choice(transitionNames[1],replace=True,p=transitionProbabilities[1])
 			if change == "rr":
 				prob = prob * 0.5
 				self.info_state = "rational"
-				self.info_state_list.append(self.info_state)
+				#self.info_state_list.append(self.info_state)
 			elif change == "rp":
 				prob = prob * 0.5
 				self.info_state = "prospect"
-				self.info_state_list.append(self.info_state)
-		self.periods += 1
+				#self.info_state_list.append(self.info_state)
+		#self.periods += 1
 #    def end_result(self):
 #        print("Possible states: " + str(info_state_list)
 #        print("End state after "+ str(nodes) + " nodes: " + "info_state")
 #        print("Probability of the possible sequence of states: " + str(prob))
 
-
-# In[49]:
-
-
+#handles rules for decision making
 class choice:
     def __init__(self):
-        self.references = [0]
-        #self.current, self.destination = random.sample(intersections, 2)
-        self.current = build_up.source
-        self.choice_set = []
-        self.options = []
-        self.gains = []
-        self.probs = []
-        self.option_gains = []
-        self.lottery = []
+        self.references = [0] #for Prospect Theory decision rule
+        self.current = random.choice(intersections) #initialize with origin
+        self.destination = random.choice(intersections) #initialize the destination
+        #self.current = build_up.source
+        self.choice_set = [] #set of routes to decide on
+        self.options = [] #gets the "time" (in this case road length) of tarvel between nodes (intersections)
+        self.gains = [] #Prospect Theory gains
+        self.probs = [] #Prospect Theory choice set probabilities
+        self.option_gains = [] 
+        self.lottery = [] #Prospect Theory lottery; route choices with probabilities
         self.choice_list = []
     def calc_gains(self):
         self.choice_set = list(networkx.neighbors(G, self.current))
@@ -107,30 +103,26 @@ class choice:
         new_node = str(self.references[-1] - decision)
         for i in self.choice_set:
             if new_node in G.get_edge_data(self.current, i)[0].values():
-                self.current = i
+                self.current = i #malfunctioning
                 self.choice_list.append(i)
-                print(i)
     def time_minimize(self):
         optimal = str(self.references[-1] - max(self.gains))
         for i in self.choice_set:
             if optimal in G.get_edge_data(self.current, i)[0].items():
-                self.current = i
+                self.current = i #malfunctioning
                 self.choice_list.append(i)
                 self.references.append(max(self.gains))
-                print(i)
-# In[ ]:
+#class build_up:
+#    def __init__(self):
+#        self.source, self.destination = random.sample(intersections, 2)
+#    def set_points(self):
+#        self.source, self.destination = random.sample(intersections, 2)
 
-class build_up:
-    def __init__(self):
-        self.source, self.destination = random.sample(intersections, 2)
-    def set_points(self):
-        self.source, self.destination = random.sample(intersections, 2)
-
-build_up = build_up()
+#build_up = build_up()
 markov = markov()
 choice = choice()
 
-def switching():
+def switching(): #main program function
     choice.calc_gains()
     choice.probabilities()
     if markov.info_state == "prospect":
@@ -141,10 +133,10 @@ def switching():
     markov.activity_forecast()
 #    markov.end_result()
 
-class operate:
+class operate: #sets up the program
     def __init__(self):
         self.maximum = None
-    def greeting(self):
+    def greeting(self): #initial greeting to set up the program
         time.sleep(3)
         print("Hello, Master! How many drivers would you like to simulate?")
         try:
@@ -154,7 +146,7 @@ class operate:
             print("Aww, Master! Please be serious...")
             sys.exit()
         self.maximum = i
-    def program(self):
+    def program(self): #main program operation
         if markov.info_state == "rational":
             conversation = " He must be really well-informed :-o"
         else:
@@ -162,20 +154,20 @@ class operate:
         for i in range(0, self.maximum):
             time.sleep(3)
             print("The starting state is %s, Master! %s" % (markov.info_state, conversation))
-            print("Going from %s to %s!" % (build_up.source, build_up.destination))
-            #print("Going from %s to %s!" % (choice.current, choice.destination))	
+            #print("Going from %s to %s!" % (build_up.source, build_up.destination))
+            print("Going from %s to %s!" % (choice.current, choice.destination))
             time.sleep(3)
             program_spinner = Spinner("Simulating, Master!")
             while True:
                 switching()
                 print("Running!")
                 program_spinner.next()
-                print(choice.current)
-                if choice.current == build_up.destination:
+                print(choice.choice_list)
+                if choice.current == choice.destination:
                     break
             program_spinner.finish()
             build_up.set_points()
-    def graph_color(self):
+    def graph_color(self): #displays the road map graph with set intersections
         import matplotlib.pyplot as plt
         appearance = list(collections.Counter(choice.choice_list).items())
         chosen = []
